@@ -7,16 +7,19 @@ from sqlalchemy.orm import sessionmaker
 
 load_dotenv()
 
-# Raw Connection info
-DB_HOST = os.getenv("DB_HOST", "localhost")
-DB_PORT = os.getenv("DB_PORT", "5432")
-DB_NAME = os.getenv("DB_NAME", "neel_db")
-DB_USER = os.getenv("DB_USER", "postgres")
-import urllib.parse
-DB_PASSWORD = os.getenv("DB_PASSWORD", "password")
-encoded_password = urllib.parse.quote_plus(DB_PASSWORD)
+# Database Configuration
+DATABASE_URL = os.getenv("DATABASE_URL")
 
-DATABASE_URL = f"postgresql://{DB_USER}:{encoded_password}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+if not DATABASE_URL:
+    # Fallback to individual components
+    DB_HOST = os.getenv("DB_HOST", "localhost")
+    DB_PORT = os.getenv("DB_PORT", "5432")
+    DB_NAME = os.getenv("DB_NAME", "neel_db")
+    DB_USER = os.getenv("DB_USER", "postgres")
+    DB_PASSWORD = os.getenv("DB_PASSWORD", "password")
+    import urllib.parse
+    encoded_password = urllib.parse.quote_plus(DB_PASSWORD)
+    DATABASE_URL = f"postgresql://{DB_USER}:{encoded_password}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 
 # SQLAlchemy Setup
 engine = create_engine(DATABASE_URL)
@@ -37,14 +40,19 @@ def get_db_connection():
     Returns a PostgreSQL connection using environment variables (psycopg2). 
     """
     try:
-        conn = psycopg2.connect(
-            host=DB_HOST,
-            port=DB_PORT,
-            database=DB_NAME,
-            user=DB_USER,
-            password=DB_PASSWORD,
-            cursor_factory=RealDictCursor
-        )
+        # Priority: DATABASE_URL, then individual components
+        dsn = os.getenv("DATABASE_URL")
+        if dsn:
+            conn = psycopg2.connect(dsn, cursor_factory=RealDictCursor)
+        else:
+            conn = psycopg2.connect(
+                host=os.getenv("DB_HOST", "localhost"),
+                port=os.getenv("DB_PORT", "5432"),
+                database=os.getenv("DB_NAME", "neel_db"),
+                user=os.getenv("DB_USER", "postgres"),
+                password=os.getenv("DB_PASSWORD", "password"),
+                cursor_factory=RealDictCursor
+            )
         # Set the search_path to public schema
         cur = conn.cursor()
         cur.execute("SET search_path TO public")
