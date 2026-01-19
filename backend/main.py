@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, Request
+from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
 from backend.db.connection import get_db_session, engine
 from backend.db import Base
@@ -7,7 +7,6 @@ import uvicorn
 import logging
 from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -16,20 +15,20 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup: Create tables
-    logger.info("🚀 Starting up NEEL Backend - SYNCING NOW...")
+    logger.info("🚀 NEEL BACKEND INITIALIZING...")
     try:
-        logger.info("📡 Connecting to Database...")
+        logger.info("📡 DB CONNECTION START...")
         Base.metadata.create_all(bind=engine)
-        logger.info("✅ Database tables synchronized.")
+        logger.info("✅ DB TABLES READY.")
     except Exception as e:
-        logger.error(f"❌ Database initialization failed: {str(e)}")
+        logger.error(f"❌ DB ERROR: {str(e)}")
     yield
-    logger.info("🛑 Shutting down NEEL Backend...")
+    logger.info("🛑 NEEL BACKEND SHUTTING DOWN...")
 
 app = FastAPI(
     title="NEEL - Unified Activity & Behavior API",
     description="Unified Backend for AI-driven Life Analytics",
-    version="1.0.3",
+    version="1.0.4",
     lifespan=lifespan
 )
 
@@ -42,45 +41,29 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Render-specific Health Check (Allows both GET and HEAD)
-@app.api_route("/", methods=["GET", "HEAD"])
-async def read_root(request: Request):
-    logger.info(f"📥 Received {request.method} request at /")
+# Root route
+@app.get("/")
+def read_root():
     return {
         "status": "online",
         "message": "Welcome to NEEL - Unified Activity & Behavior API",
-        "version": "1.0.3"
+        "version": "1.0.4"
     }
 
-@app.api_route("/api/health", methods=["GET", "HEAD"])
-async def health_check():
+# Health Check
+@app.get("/api/health")
+def health_check():
     return {"status": "healthy", "service": "NEEL"}
 
-# Catch-all route for debugging 404s
-@app.api_route("/{path_name:path}", methods=["GET", "POST", "PUT", "DELETE", "HEAD"])
-async def catch_all(request: Request, path_name: str):
-    logger.warning(f"⚠️ Catch-all triggered for: {path_name} (Method: {request.method})")
-    # If it's the root, return root anyway
-    if path_name == "":
-        return await read_root(request)
-    return JSONResponse(
-        status_code=404,
-        content={"detail": f"Path '{path_name}' not found on NEEL API. Try /api/auth/login"}
-    )
-
 # Include routers
-try:
-    from backend.routers import activities, activity_types, profiles, outcomes, intelligence, auth, dashboard
-    app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
-    app.include_router(dashboard.router, prefix="/api/dashboard", tags=["dashboard"])
-    app.include_router(activities.router, prefix="/api/activities", tags=["activities"])
-    app.include_router(activity_types.router, prefix="/api/activity-types", tags=["activity-types"])
-    app.include_router(profiles.router, prefix="/api/profiles", tags=["profiles"])
-    app.include_router(outcomes.router, prefix="/api/outcomes", tags=["outcomes"])
-    app.include_router(intelligence.router, prefix="/api/intelligence", tags=["intelligence"])
-    logger.info("✅ All routers included successfully.")
-except Exception as e:
-    logger.error(f"❌ Failed to include routers: {str(e)}")
+from backend.routers import activities, activity_types, profiles, outcomes, intelligence, auth, dashboard
+app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
+app.include_router(dashboard.router, prefix="/api/dashboard", tags=["dashboard"])
+app.include_router(activities.router, prefix="/api/activities", tags=["activities"])
+app.include_router(activity_types.router, prefix="/api/activity-types", tags=["activity-types"])
+app.include_router(profiles.router, prefix="/api/profiles", tags=["profiles"])
+app.include_router(outcomes.router, prefix="/api/outcomes", tags=["outcomes"])
+app.include_router(intelligence.router, prefix="/api/intelligence", tags=["intelligence"])
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
