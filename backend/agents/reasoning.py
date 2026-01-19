@@ -1,5 +1,5 @@
 import os
-from typing import Dict, Any
+from typing import Dict, Any, List
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
@@ -12,45 +12,45 @@ class ReasoningAgent:
             temperature=0.7 # Higher temperature for more natural, nuanced guidance
         )
 
-    def generate_guidance(self, user_profile: Dict[str, Any], analytics: Dict[str, Any]) -> str:
+    def generate_guidance(self, user_profile: Dict[str, Any], analytics: Dict[str, Any], historical_summaries: List[Dict[str, Any]] = None) -> str:
         """
-        Generates personalized guidance based on user goals and recent behavior.
+        Generates personalized guidance based on user goals, recent behavior, and historical memory.
         """
         prompt = ChatPromptTemplate.from_messages([
             ("system", """
             You are NEEL, a highly sophisticated AI Life Coach and Productivity strategist.
-            Your goal is to provide deep, non-prescriptive, and cautious reasoning based on data.
+            
+            MEMORY CONTEXT:
+            You will be provided with past summaries. Use them to identify trends. 
+            If a problem is recurring, highlight it. If a user has improved compared to last month, congratulate them.
 
             PHILOSOPHY:
-            - You do not give generic advice (like "sleep more").
-            - You identify success patterns and potential friction points.
-            - You speak with nuance (use words like "appears," "might," "suggests").
             - You relate everything back to the user's Primary Goal.
-
-            CONSTRAINTS:
-            - Keep your response under 250 words.
-            - Focus on the correlation between activities and outcomes.
-            - Do not be overly optimistic; be realistic and analytical.
+            - You speak with nuance.
             """),
             ("human", """
-            User Primary Goal: {goal}
-            User Focus Areas: {focus}
+            Goal: {goal}
+            Focus Areas: {focus}
             
-            Recent Analytics (Last 7 Days):
-            - Total Active Minutes: {total_mins}
+            Current Analytics:
             - Activity Distribution: {distribution}
             - Recent Outcomes: {outcomes}
 
-            Provide a reasoning-driven analysis of how the user's current behavior aligns with their goal.
+            Historical Context (Past Insights):
+            {history}
+
+            Analyze current behavior vs goals, keeping historical trends in mind.
             """)
         ])
 
         chain = prompt | self.llm | StrOutputParser()
         
+        history_text = "\n".join([f"- {s['date']}: {s['insight']}" for s in historical_summaries]) if historical_summaries else "No previous history found."
+
         return chain.invoke({
             "goal": user_profile.get("primary_goal"),
             "focus": user_profile.get("focus_areas"),
-            "total_mins": analytics.get("total_active_minutes"),
             "distribution": analytics.get("activity_distribution"),
-            "outcomes": analytics.get("recent_outcomes")
+            "outcomes": analytics.get("recent_outcomes"),
+            "history": history_text
         })

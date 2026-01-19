@@ -23,6 +23,9 @@ class OutcomeType(enum.Enum):
 class User(Base):
     __tablename__ = "user"
     user_id = Column(Integer, primary_key=True, autoincrement=True)
+    email = Column(String(255), unique=True, nullable=False)
+    name = Column(String(255), nullable=True)
+    password_hash = Column(String(255), nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     timezone = Column(String, nullable=True)
 
