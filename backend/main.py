@@ -2,11 +2,12 @@ from fastapi import FastAPI, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from backend.db.connection import get_db_session, engine
 from backend.db import Base
-from backend.models import User # Ensure models are loaded
+from backend.models import User
 import uvicorn
 import logging
 from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
+from backend.routers import activities, activity_types, profiles, outcomes, intelligence, auth, dashboard
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -15,20 +16,17 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup: Create tables
-    logger.info("🚀 NEEL BACKEND v1.0.5 - INITIALIZING...")
+    logger.info("🚀 NEEL CORE v1.0.6 - STARTING")
     try:
-        logger.info("📡 DB CONNECTION START...")
         Base.metadata.create_all(bind=engine)
-        logger.info("✅ DB TABLES READY.")
+        logger.info("✅ DATABASE SYNC COMPLETE")
     except Exception as e:
-        logger.error(f"❌ DB ERROR: {str(e)}")
+        logger.error(f"❌ DATABASE ERROR: {str(e)}")
     yield
-    logger.info("🛑 NEEL BACKEND SHUTTING DOWN...")
 
 app = FastAPI(
-    title="NEEL - Unified Activity & Behavior API",
-    description="Unified Backend for AI-driven Life Analytics",
-    version="1.0.5",
+    title="NEEL",
+    version="1.0.6",
     lifespan=lifespan
 )
 
@@ -41,23 +39,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Root route - explicitly supporting HEAD for Render
-@app.api_route("/", methods=["GET", "HEAD"])
-async def read_root(request: Request):
-    return {
-        "status": "online",
-        "message": "Welcome to NEEL - Unified Activity & Behavior API",
-        "version": "1.0.5",
-        "method": request.method
-    }
+@app.get("/")
+async def root():
+    return {"status": "online", "version": "1.0.6", "app": "NEEL"}
 
-# Health Check - explicitly supporting HEAD for Render
-@app.api_route("/api/health", methods=["GET", "HEAD"])
-async def health_check(request: Request):
-    return {"status": "healthy", "service": "NEEL", "method": request.method}
+@app.head("/")
+async def root_head():
+    return {}
+
+@app.get("/health")
+async def health():
+    return {"status": "ok"}
 
 # Include routers
-from backend.routers import activities, activity_types, profiles, outcomes, intelligence, auth, dashboard
 app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 app.include_router(dashboard.router, prefix="/api/dashboard", tags=["dashboard"])
 app.include_router(activities.router, prefix="/api/activities", tags=["activities"])
