@@ -24,7 +24,11 @@ if not DATABASE_URL:
     DATABASE_URL = f"postgresql://{DB_USER}:{encoded_password}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 
 # SQLAlchemy Setup
-engine = create_engine(DATABASE_URL)
+# Add a 10 second timeout to connection attempts to prevent hangs
+engine = create_engine(
+    DATABASE_URL, 
+    connect_args={"connect_timeout": 10}
+)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 def get_db_session():
