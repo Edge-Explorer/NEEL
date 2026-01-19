@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from backend.db.connection import get_db_session, engine
 from backend.db import Base
@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup: Create tables
-    logger.info("🚀 NEEL BACKEND INITIALIZING...")
+    logger.info("🚀 NEEL BACKEND v1.0.5 - INITIALIZING...")
     try:
         logger.info("📡 DB CONNECTION START...")
         Base.metadata.create_all(bind=engine)
@@ -28,7 +28,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="NEEL - Unified Activity & Behavior API",
     description="Unified Backend for AI-driven Life Analytics",
-    version="1.0.4",
+    version="1.0.5",
     lifespan=lifespan
 )
 
@@ -41,19 +41,20 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Root route
-@app.get("/")
-def read_root():
+# Root route - explicitly supporting HEAD for Render
+@app.api_route("/", methods=["GET", "HEAD"])
+async def read_root(request: Request):
     return {
         "status": "online",
         "message": "Welcome to NEEL - Unified Activity & Behavior API",
-        "version": "1.0.4"
+        "version": "1.0.5",
+        "method": request.method
     }
 
-# Health Check
-@app.get("/api/health")
-def health_check():
-    return {"status": "healthy", "service": "NEEL"}
+# Health Check - explicitly supporting HEAD for Render
+@app.api_route("/api/health", methods=["GET", "HEAD"])
+async def health_check(request: Request):
+    return {"status": "healthy", "service": "NEEL", "method": request.method}
 
 # Include routers
 from backend.routers import activities, activity_types, profiles, outcomes, intelligence, auth, dashboard
