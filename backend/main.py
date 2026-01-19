@@ -7,6 +7,7 @@ import uvicorn
 import logging
 from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -15,7 +16,7 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup: Create tables
-    logger.info("🚀 Starting up NEEL Backend...")
+    logger.info("🚀 Starting up NEEL Backend - SYNCING NOW...")
     try:
         logger.info("📡 Connecting to Database...")
         Base.metadata.create_all(bind=engine)
@@ -28,7 +29,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="NEEL - Unified Activity & Behavior API",
     description="Unified Backend for AI-driven Life Analytics",
-    version="1.0.2",
+    version="1.0.3",
     lifespan=lifespan
 )
 
@@ -43,16 +44,29 @@ app.add_middleware(
 
 # Render-specific Health Check (Allows both GET and HEAD)
 @app.api_route("/", methods=["GET", "HEAD"])
-def read_root():
+async def read_root(request: Request):
+    logger.info(f"📥 Received {request.method} request at /")
     return {
         "status": "online",
         "message": "Welcome to NEEL - Unified Activity & Behavior API",
-        "version": "1.0.2"
+        "version": "1.0.3"
     }
 
 @app.api_route("/api/health", methods=["GET", "HEAD"])
-def health_check():
+async def health_check():
     return {"status": "healthy", "service": "NEEL"}
+
+# Catch-all route for debugging 404s
+@app.api_route("/{path_name:path}", methods=["GET", "POST", "PUT", "DELETE", "HEAD"])
+async def catch_all(request: Request, path_name: str):
+    logger.warning(f"⚠️ Catch-all triggered for: {path_name} (Method: {request.method})")
+    # If it's the root, return root anyway
+    if path_name == "":
+        return await read_root(request)
+    return JSONResponse(
+        status_code=404,
+        content={"detail": f"Path '{path_name}' not found on NEEL API. Try /api/auth/login"}
+    )
 
 # Include routers
 try:
