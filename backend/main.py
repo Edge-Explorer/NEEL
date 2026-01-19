@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from backend.db.connection import get_db_session, engine
 from backend.db import Base
@@ -28,7 +28,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="NEEL - Unified Activity & Behavior API",
     description="Unified Backend for AI-driven Life Analytics",
-    version="1.0.1",
+    version="1.0.2",
     lifespan=lifespan
 )
 
@@ -41,15 +41,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get("/")
+# Render-specific Health Check (Allows both GET and HEAD)
+@app.api_route("/", methods=["GET", "HEAD"])
 def read_root():
     return {
         "status": "online",
         "message": "Welcome to NEEL - Unified Activity & Behavior API",
-        "version": "1.0.1"
+        "version": "1.0.2"
     }
 
-@app.get("/api/health")
+@app.api_route("/api/health", methods=["GET", "HEAD"])
 def health_check():
     return {"status": "healthy", "service": "NEEL"}
 
