@@ -14,11 +14,22 @@ async def lifespan(app: FastAPI):
     yield
     # Shutdown logic (if any) can go here
 
+from fastapi.middleware.cors import CORSMiddleware
+
 app = FastAPI(
     title="NEEL - Unified Activity & Behavior API",
     description="Unified Backend for AI-driven Life Analytics",
     version="1.0.0",
     lifespan=lifespan
+)
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 @app.get("/")
