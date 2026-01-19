@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup: Create tables
-    logger.info("🚀 NEEL CORE v1.0.6 - STARTING")
+    logger.info("🚀 NEEL CORE v1.0.7 - STARTING")
     try:
         Base.metadata.create_all(bind=engine)
         logger.info("✅ DATABASE SYNC COMPLETE")
@@ -26,7 +26,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="NEEL",
-    version="1.0.6",
+    version="1.0.7",
     lifespan=lifespan
 )
 
@@ -41,7 +41,7 @@ app.add_middleware(
 
 @app.get("/")
 async def root():
-    return {"status": "online", "version": "1.0.6", "app": "NEEL"}
+    return {"status": "online", "version": "1.0.7", "app": "NEEL"}
 
 @app.head("/")
 async def root_head():
