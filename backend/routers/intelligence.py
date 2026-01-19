@@ -7,33 +7,57 @@ from backend.agents.supervisor import SupervisorAgent
 
 router = APIRouter()
 
-@router.get("/status/{user_id}")
-async def get_ai_status(user_id: int, db: Session = Depends(get_db_session)):
+from backend.agents.reasoning import ReasoningAgent
+from backend.agents.reflection import ReflectionAgent
+
+@router.get("/analyze/{user_id}")
+async def analyze_user_data(user_id: int, db: Session = Depends(get_db_session)):
     """
-    Analyzes user data through the AI Supervisor gate.
+    Full Multi-Agent Pipeline: 
+    Supervisor (Gate) -> Reasoning (Brain) -> Reflection (Auditor)
     """
-    # 1. Get Analytics
+    # 1. Gather Data
     engine = AnalyticsEngine(db)
     stats = engine.get_summary_for_period(user_id)
     
-    # 2. Get Profile
     profile_repo = UserProfileRepository(db)
-    profile = profile_repo.get_profile(user_id)
+    profile_db = profile_repo.get_profile(user_id)
+    if not profile_db:
+        raise HTTPException(status_code=400, detail="User profile missing.")
     
-    if not profile:
-        raise HTTPException(status_code=400, detail="User profile missing. Please set goals first.")
+    profile = {
+        "primary_goal": profile_db.primary_goal,
+        "focus_areas": profile_db.focus_areas
+    }
 
-    # 3. Run Supervisor Gate
+    # 2. Supervisor Gate
     supervisor = SupervisorAgent()
-    evaluation = supervisor.evaluate_data(
-        user_profile={
-            "goal": profile.primary_goal,
-            "focus": profile.focus_areas
-        },
-        analytics=stats
-    )
+    check = supervisor.evaluate_data(profile, stats)
     
+    if not check.allow_reasoning:
+        return {
+            "status": "DATA_INSUFFICIENT",
+            "message": check.reason,
+            "confidence": check.confidence
+        }
+
+    # 3. Reasoning Phase
+    reasoner = ReasoningAgent()
+    draft = reasoner.generate_guidance(profile, stats)
+
+    # 4. Reflection Phase (Audit)
+    reflector = ReflectionAgent()
+    audit = reflector.review_response(draft, profile)
+
+    # 5. Final Output Logic
+    if audit.decision == "REJECT":
+        return {"status": "INTERNAL_ERROR", "message": "The AI response failed safety checks."}
+    
+    final_response = audit.suggested_revision if audit.decision == "SOFTEN" else draft
+
     return {
-        "analytics": stats,
-        "supervisor_evaluation": evaluation
+        "status": "SUCCESS",
+        "confidence": check.confidence,
+        "analysis": final_response,
+        "reflection_audit": audit.critique
     }
