@@ -4,22 +4,31 @@ from backend.db.connection import get_db_session, engine
 from backend.db import Base
 from backend.models import User # Ensure models are loaded
 import uvicorn
-
+import logging
 from contextlib import asynccontextmanager
+from fastapi.middleware.cors import CORSMiddleware
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup: Create tables
-    Base.metadata.create_all(bind=engine)
+    logger.info("🚀 Starting up NEEL Backend...")
+    try:
+        logger.info("📡 Connecting to Database...")
+        Base.metadata.create_all(bind=engine)
+        logger.info("✅ Database tables synchronized.")
+    except Exception as e:
+        logger.error(f"❌ Database initialization failed: {str(e)}")
     yield
-    # Shutdown logic (if any) can go here
-
-from fastapi.middleware.cors import CORSMiddleware
+    logger.info("🛑 Shutting down NEEL Backend...")
 
 app = FastAPI(
     title="NEEL - Unified Activity & Behavior API",
     description="Unified Backend for AI-driven Life Analytics",
-    version="1.0.0",
+    version="1.0.1",
     lifespan=lifespan
 )
 
@@ -34,17 +43,29 @@ app.add_middleware(
 
 @app.get("/")
 def read_root():
-    return {"message": "Welcome to NEEL - Unified Activity & Behavior API"}
+    return {
+        "status": "online",
+        "message": "Welcome to NEEL - Unified Activity & Behavior API",
+        "version": "1.0.1"
+    }
+
+@app.get("/api/health")
+def health_check():
+    return {"status": "healthy", "service": "NEEL"}
 
 # Include routers
-from backend.routers import activities, activity_types, profiles, outcomes, intelligence, auth, dashboard
-app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
-app.include_router(dashboard.router, prefix="/api/dashboard", tags=["dashboard"])
-app.include_router(activities.router, prefix="/api/activities", tags=["activities"])
-app.include_router(activity_types.router, prefix="/api/activity-types", tags=["activity-types"])
-app.include_router(profiles.router, prefix="/api/profiles", tags=["profiles"])
-app.include_router(outcomes.router, prefix="/api/outcomes", tags=["outcomes"])
-app.include_router(intelligence.router, prefix="/api/intelligence", tags=["intelligence"])
+try:
+    from backend.routers import activities, activity_types, profiles, outcomes, intelligence, auth, dashboard
+    app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
+    app.include_router(dashboard.router, prefix="/api/dashboard", tags=["dashboard"])
+    app.include_router(activities.router, prefix="/api/activities", tags=["activities"])
+    app.include_router(activity_types.router, prefix="/api/activity-types", tags=["activity-types"])
+    app.include_router(profiles.router, prefix="/api/profiles", tags=["profiles"])
+    app.include_router(outcomes.router, prefix="/api/outcomes", tags=["outcomes"])
+    app.include_router(intelligence.router, prefix="/api/intelligence", tags=["intelligence"])
+    logger.info("✅ All routers included successfully.")
+except Exception as e:
+    logger.error(f"❌ Failed to include routers: {str(e)}")
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
