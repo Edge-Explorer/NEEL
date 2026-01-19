@@ -39,6 +39,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Logging middleware
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    logger.info(f"🔍 REQUEST: {request.method} {request.url}")
+    response = await call_next(request)
+    logger.info(f"🟢 RESPONSE: {response.status_code}")
+    return response
+
 @app.get("/")
 async def root():
     return {"status": "online", "version": "1.0.7", "app": "NEEL"}

@@ -62,6 +62,9 @@ class ActivityLog(Base):
     notes = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
+    user = relationship("User")
+    activity = relationship("Activity")
+
 class Outcome(Base):
     __tablename__ = "outcome"
     outcome_id = Column(Integer, primary_key=True, autoincrement=True)

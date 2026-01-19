@@ -7,7 +7,7 @@ from langchain_core.output_parsers import StrOutputParser
 class ReasoningAgent:
     def __init__(self):
         self.llm = ChatGoogleGenerativeAI(
-            model="gemini-1.5-flash",
+            model="gemini-2.0-flash",
             google_api_key=os.getenv("Google_Gemini_Api_Key"),
             temperature=0.7 # Higher temperature for more natural, nuanced guidance
         )
@@ -39,7 +39,10 @@ class ReasoningAgent:
             Historical Context (Past Insights):
             {history}
 
-            Analyze current behavior vs goals, keeping historical trends in mind.
+            User Specific Question/Query:
+            {query}
+
+            Analyze current behavior vs goals, keeping historical trends in mind. Respond to the user's specific query if provided, otherwise provide a general progress assessment.
             """)
         ])
 
@@ -52,5 +55,6 @@ class ReasoningAgent:
             "focus": user_profile.get("focus_areas"),
             "distribution": analytics.get("activity_distribution"),
             "outcomes": analytics.get("recent_outcomes"),
-            "history": history_text
+            "history": history_text,
+            "query": user_profile.get("user_query", "No specific query provided.")
         })

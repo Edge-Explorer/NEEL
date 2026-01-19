@@ -39,3 +39,16 @@ alembic.log
 # OS
 .DS_Store
 Thumbs.db
+
+# Frontend
+mobile/
+
+# Diagnostic Scripts
+check_models.py
+check_models_detailed.py
+check_models_new_sdk.py
+test_models_langchain.py
+available_models.txt
+available_models_detailed.txt
+available_models_full.txt
+model_test_results.txt

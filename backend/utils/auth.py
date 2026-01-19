@@ -36,6 +36,7 @@ def decode_access_token(token: str):
         return None
 
 async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db_session)):
+    print(f"DEBUG: get_current_user called with token: {token[:10]}...")
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -43,11 +44,16 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
     )
     payload = decode_access_token(token)
     if payload is None:
+        print("DEBUG: Token decoding failed")
         raise credentials_exception
+    print(f"DEBUG: Payload: {payload}")
     user_id: str = payload.get("sub")
     if user_id is None:
+        print("DEBUG: sub (user_id) missing from payload")
         raise credentials_exception
     user = db.query(User).filter(User.user_id == int(user_id)).first()
     if user is None:
+        print(f"DEBUG: User not found for ID: {user_id}")
         raise credentials_exception
+    print(f"DEBUG: User found: {user.email}")
     return user

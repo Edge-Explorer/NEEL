@@ -37,6 +37,16 @@ async def register(user_data: UserRegister, db: Session = Depends(get_db_session
     db.commit()
     db.refresh(new_user)
     
+    # Create default profile
+    from backend.models import UserProfile
+    default_profile = UserProfile(
+        user_id=new_user.user_id,
+        primary_goal="Set your first goal",
+        time_horizon="Monthly"
+    )
+    db.add(default_profile)
+    db.commit()
+    
     return {"message": "User created successfully", "user_id": new_user.user_id}
 
 @router.post("/login")
@@ -51,3 +61,8 @@ async def login(credentials: UserLogin, db: Session = Depends(get_db_session)):
     
     access_token = create_access_token(data={"sub": str(user.user_id), "email": user.email})
     return {"access_token": access_token, "token_type": "bearer", "user_id": user.user_id}
+
+from backend.utils.auth import get_current_user
+@router.get("/me")
+async def read_users_me(current_user: User = Depends(get_current_user)):
+    return {"user_id": current_user.user_id, "email": current_user.email, "name": current_user.name}

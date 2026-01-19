@@ -12,7 +12,7 @@ class ConfidenceScore(BaseModel):
 class SupervisorAgent:
     def __init__(self):
         self.llm = ChatGoogleGenerativeAI(
-            model="gemini-1.5-flash",
+            model="gemini-2.0-flash",
             google_api_key=os.getenv("Google_Gemini_Api_Key"),
             temperature=0
         )

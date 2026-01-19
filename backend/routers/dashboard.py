@@ -18,31 +18,37 @@ async def get_dashboard(db: Session = Depends(get_db_session), current_user: Use
     """
     user_id = current_user.user_id
     
-    # 1. Recent Stats (Last 7 Days)
-    engine = AnalyticsEngine(db)
-    weekly_stats = engine.get_summary_for_period(user_id, days=7)
-    
-    # 2. Today's Logs
+    # 1. Activities (Logs) - Fetch actual activity types
     log_repo = ActivityLogRepository(db)
-    all_logs = log_repo.get_user_logs(user_id, limit=20)
-    today_str = datetime.utcnow().date().isoformat()
-    today_logs = [log for log in all_logs if log.date.isoformat() == today_str]
+    all_logs = log_repo.get_user_logs(user_id, limit=10)
     
-    # 3. User Profile
+    # Format activities for frontend
+    activities = []
+    for log in all_logs:
+        activities.append({
+            "log_id": log.log_id,
+            "activity_type": {"name": log.activity.activity_name if log.activity else "Unknown Activity"},
+            "timestamp": log.date.isoformat(),
+            "date": log.date.isoformat()
+        })
+    
+    # 2. User Profile
     profile_repo = UserProfileRepository(db)
     profile = profile_repo.get_profile(user_id)
     
-    # 4. Recent Outcomes
+    # 3. Recent Outcomes (Goals)
     outcome_repo = OutcomeRepository(db)
     outcomes = outcome_repo.get_user_outcomes(user_id, limit=5)
     
     return {
-        "user_name": current_user.name,
-        "weekly_stats": weekly_stats,
-        "today_logs_count": len(today_logs),
-        "primary_goal": profile.primary_goal if profile else "No goal set",
-        "recent_outcomes": [
-            {"type": o.outcome_type.value, "value": o.outcome_value, "date": o.date.isoformat()}
+        "profile": {
+            "name": current_user.name,
+            "primary_goal": profile.primary_goal if profile else "No primary goal"
+        },
+        "activities": activities,
+        "outcomes": [
+            {"id": o.outcome_id, "type": o.outcome_type.value, "value": o.outcome_value, "date": o.date.isoformat()}
             for o in outcomes
-        ]
+        ],
+        "user_name": current_user.name # Keep for compatibility
     }
