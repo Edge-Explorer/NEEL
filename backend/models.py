@@ -86,3 +86,11 @@ class AnalyticsSummary(Base):
     goal_alignment = Column(Text, nullable=True)
     key_insight = Column(Text, nullable=True)
     generated_at = Column(DateTime, default=datetime.utcnow)
+
+class ChatMessage(Base):
+    __tablename__ = "chat_message"
+    message_id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey("user.user_id"), nullable=False)
+    role = Column(String(10), nullable=False) # 'user' or 'ai'
+    content = Column(Text, nullable=False)
+    timestamp = Column(DateTime, default=datetime.utcnow)

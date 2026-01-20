@@ -28,9 +28,12 @@ class SupervisorAgent:
             You must evaluate if the user's logged activity is stable enough to draw conclusions.
 
             RULES:
-            - If total_active_minutes < 120 (for 7 days), confidence is LOW.
-            - If there are no outcomes (results) linked to logs, confidence is MEDIUM.
-            - If the user has a primary goal but no matching activity logs, allow_reasoning must be FALSE.
+            - This is a 7-day 'Calibration/Sync' phase.
+            - allow_reasoning must be TRUE if total_active_minutes >= 120 OR days_logged >= 7.
+            - If total_active_minutes < 60, confidence is LOW and allow_reasoning must be FALSE.
+            - If days_logged < 1, allow_reasoning must be FALSE.
+            - If the user has a primary goal but no matching activity logs at all, allow_reasoning must be FALSE.
+            - Once allowed, the goal is to provide deep strategy based on patterns.
             """),
             ("human", "User Profile: {profile}\n\nRecent Analytics: {analytics}")
         ])

@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
+import { useFocusEffect } from 'expo-router';
 import {
   StyleSheet,
   ScrollView,
@@ -20,7 +21,9 @@ import {
   BrainCircuit,
   ChevronRight,
   Plus,
-  LogOut
+  LogOut,
+  Flame,
+  TrendingUp
 } from 'lucide-react-native';
 import apiClient from '../../services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -33,6 +36,7 @@ export default function DashboardScreen() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [expandedActivities, setExpandedActivities] = useState(false);
 
   const fetchDashboardData = async () => {
     try {
@@ -46,9 +50,11 @@ export default function DashboardScreen() {
     }
   };
 
-  useEffect(() => {
-    fetchDashboardData();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      fetchDashboardData();
+    }, [])
+  );
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
@@ -109,19 +115,62 @@ export default function DashboardScreen() {
         </View>
 
         {/* Global Insight Card */}
-        <LinearGradient
-          colors={['rgba(139, 92, 246, 0.15)', 'rgba(6, 182, 212, 0.05)']}
-          style={styles.insightCard}
+        <TouchableOpacity
+          onPress={() => router.push('/set-goals')}
+          activeOpacity={0.8}
         >
-          <View style={styles.insightHeader}>
-            <Zap color={COLORS.primary} size={20} />
-            <Text style={styles.insightTitle}>Primary Goal</Text>
+          <LinearGradient
+            colors={['rgba(139, 92, 246, 0.15)', 'rgba(6, 182, 212, 0.05)']}
+            style={styles.insightCard}
+          >
+            <View style={styles.insightHeader}>
+              <Zap color={COLORS.primary} size={20} />
+              <Text style={styles.insightTitle}>Primary Goal</Text>
+            </View>
+            <Text style={styles.insightValue}>
+              {data?.profile?.primary_goal || 'Focus'}
+            </Text>
+            <Text style={styles.insightDesc}>
+              {data?.profile?.primary_goal
+                ? "Tap to recalibrate your strategy"
+                : "Connect your brain to NEEL to set a target."}
+            </Text>
+          </LinearGradient>
+        </TouchableOpacity>
+
+        {/* Activity Breakdown (Visual Analytics) */}
+        {data?.activity_distribution && Object.keys(data.activity_distribution).length > 0 && (
+          <View style={styles.breakdownContainer}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Activity Breakdown</Text>
+              <BarChart3 color={COLORS.secondary} size={18} />
+            </View>
+            <View style={styles.breakdownCard}>
+              {Object.entries(data.activity_distribution).map(([cat, mins]: [any, any], idx) => {
+                const totalMins: number = Object.values(data.activity_distribution).reduce((a: any, b: any) => a + b, 0) as number;
+                const percentage = Math.round((mins / totalMins) * 100);
+                const colors = [COLORS.primary, COLORS.secondary, COLORS.error, COLORS.accent, '#A855F7'];
+
+                return (
+                  <View key={cat} style={styles.breakdownRow}>
+                    <View style={styles.breakdownLabelRow}>
+                      <Text style={styles.breakdownLabel}>{cat}</Text>
+                      <Text style={styles.breakdownValue}>{mins}m ({percentage}%)</Text>
+                    </View>
+                    <View style={styles.breakdownBarBg}>
+                      <View
+                        style={[
+                          styles.breakdownBarFill,
+                          { width: `${percentage}%`, backgroundColor: colors[idx % colors.length] }
+                        ]}
+                      />
+                    </View>
+                  </View>
+                );
+              })}
+            </View>
           </View>
-          <Text style={styles.insightValue}>Focus</Text>
-          <Text style={styles.insightDesc}>
-            {data?.profile?.primary_goal || 'Connect your brain to NEEL to set a target.'}
-          </Text>
-        </LinearGradient>
+        )}
 
         {/* Quick Stats Grid */}
         <View style={styles.statsGrid}>
@@ -137,34 +186,92 @@ export default function DashboardScreen() {
               <Target color={COLORS.secondary} size={20} />
             </View>
             <Text style={styles.statLabel}>Goals</Text>
-            <Text style={styles.statValue}>{data?.outcomes?.length || 0}</Text>
+            <Text style={styles.statValue}>{data?.goals_count || 0}</Text>
           </View>
           <View style={styles.statItem}>
-            <View style={[styles.statIconContainer, { backgroundColor: 'rgba(244, 114, 182, 0.1)' }]}>
-              <BarChart3 color={COLORS.accent} size={20} />
+            <View style={[styles.statIconContainer, { backgroundColor: 'rgba(34, 197, 94, 0.1)' }]}>
+              <Zap color="#22c55e" size={20} />
             </View>
             <Text style={styles.statLabel}>Sync</Text>
-            <Text style={styles.statValue}>1.0.7</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#22c55e' }} />
+              <Text style={[styles.statValue, { color: '#22c55e' }]}>Active</Text>
+            </View>
           </View>
+        </View>
+
+        {/* Training Progress / Streak Section */}
+        <View style={styles.trainingSection}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>NEEL Training Progress</Text>
+            <View style={styles.streakBadge}>
+              <Flame color={COLORS.accent} size={16} fill={COLORS.accent} />
+              <Text style={styles.streakText}>{data?.streak || 0} Day Streak</Text>
+            </View>
+          </View>
+
+          <TouchableOpacity style={styles.progressCard}>
+            <View style={styles.progressHeader}>
+              <Text style={styles.progressLabel}>Calibration Status</Text>
+              <Text style={styles.progressValue}>{Math.round(data?.onboarding?.overall_progress || 0)}%</Text>
+            </View>
+
+            <View style={styles.progressBarContainer}>
+              <View
+                style={[
+                  styles.progressBar,
+                  { width: `${data?.onboarding?.overall_progress || 0}%` }
+                ]}
+              />
+            </View>
+
+            <View style={styles.progressFooter}>
+              <View style={styles.progressInfo}>
+                <Activity color={COLORS.primary} size={12} />
+                <Text style={styles.progressInfoText}>
+                  {data?.onboarding?.total_minutes || 0}/{data?.onboarding?.target_minutes || 120} mins
+                </Text>
+              </View>
+              <View style={styles.progressInfo}>
+                <TrendingUp color={COLORS.secondary} size={12} />
+                <Text style={styles.progressInfoText}>
+                  Day {data?.onboarding?.days_logged || 0} of 7
+                </Text>
+              </View>
+            </View>
+
+            <Text style={styles.onboardingMessage}>
+              {data?.onboarding?.is_complete
+                ? "🚀 NEEL is fully synchronized! Deep insights unlocked."
+                : "Feed more activity logs to sharpen NEEL's strategy engine."}
+            </Text>
+          </TouchableOpacity>
         </View>
 
         {/* Intelligence Feed */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Intelligence Feed</Text>
-          <TouchableOpacity>
-            <Text style={styles.viewAll}>Expand All</Text>
+          <TouchableOpacity onPress={() => setExpandedActivities(!expandedActivities)}>
+            <Text style={styles.viewAll}>{expandedActivities ? 'Show Less' : 'Expand All'}</Text>
           </TouchableOpacity>
         </View>
 
-        {data?.activities?.map((item: any, index: any) => (
-          <TouchableOpacity key={item.log_id || index} style={styles.feedCard}>
+        {(expandedActivities ? data.activities || [] : (data.activities || []).slice(0, 3)).map((item: any) => (
+          <TouchableOpacity
+            key={item.log_id}
+            style={styles.feedCard}
+            onPress={() => router.push({
+              pathname: '/edit-activity',
+              params: { id: item.log_id, data: JSON.stringify(item) }
+            })}
+          >
             <View style={styles.feedIcon}>
               <Activity color={COLORS.textSecondary} size={18} />
             </View>
             <View style={styles.feedContent}>
-              <Text style={styles.feedTitle}>{item.activity_type?.name || 'Activity'}</Text>
+              <Text style={styles.feedTitle}>{item.activity_name}</Text>
               <Text style={styles.feedTime}>
-                {new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                {new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
               </Text>
             </View>
             <ChevronRight color={COLORS.textSecondary} size={20} />
@@ -176,7 +283,10 @@ export default function DashboardScreen() {
       </LinearGradient>
 
       {/* Action Button */}
-      <TouchableOpacity style={styles.fab}>
+      <TouchableOpacity
+        style={styles.fab}
+        onPress={() => router.push('/log-activity')}
+      >
         <Plus color="#fff" size={32} />
       </TouchableOpacity>
     </ScrollView >
@@ -354,5 +464,118 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.5,
     shadowRadius: 15,
     elevation: 8,
-  }
+  },
+  trainingSection: {
+    marginBottom: SPACING.xl,
+  },
+  streakBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(244, 114, 182, 0.15)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(244, 114, 182, 0.3)',
+  },
+  streakText: {
+    color: COLORS.accent,
+    fontSize: 12,
+    fontWeight: '700',
+    marginLeft: 6,
+  },
+  progressCard: {
+    backgroundColor: COLORS.surface,
+    padding: SPACING.md,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  progressHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  progressLabel: {
+    color: COLORS.text,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  progressValue: {
+    color: COLORS.secondary,
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  progressBarContainer: {
+    height: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 5,
+    marginBottom: 12,
+    overflow: 'hidden',
+  },
+  progressBar: {
+    height: '100%',
+    backgroundColor: COLORS.primary,
+    borderRadius: 5,
+  },
+  progressFooter: {
+    flexDirection: 'row',
+    gap: 15,
+    marginBottom: 12,
+  },
+  progressInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  progressInfoText: {
+    color: COLORS.textSecondary,
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  onboardingMessage: {
+    color: COLORS.textSecondary,
+    fontSize: 12,
+    fontStyle: 'italic',
+    lineHeight: 18,
+  },
+  breakdownContainer: {
+    marginBottom: SPACING.xl,
+  },
+  breakdownCard: {
+    backgroundColor: COLORS.surface,
+    padding: SPACING.lg,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  breakdownRow: {
+    marginBottom: 16,
+  },
+  breakdownLabelRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  breakdownLabel: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  breakdownValue: {
+    color: COLORS.textSecondary,
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  breakdownBarBg: {
+    height: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  breakdownBarFill: {
+    height: '100%',
+    borderRadius: 4,
+  },
 });

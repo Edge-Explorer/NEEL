@@ -1,7 +1,7 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const API_BASE_URL = 'https://neel-backend-v1.loca.lt'; // New stable tunnel address
+const API_BASE_URL = 'https://neel-backend-v2.loca.lt'; // New stable tunnel address v2
 
 const apiClient = axios.create({
     baseURL: API_BASE_URL,

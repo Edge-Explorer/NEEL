@@ -20,7 +20,7 @@ class ActivityLogRepository:
         return db_log
 
     def get_user_logs(self, user_id: int, limit: int = 100) -> List[ActivityLog]:
-        return self.db.query(ActivityLog).filter(ActivityLog.user_id == user_id).order_by(ActivityLog.date.desc()).limit(limit).all()
+        return self.db.query(ActivityLog).filter(ActivityLog.user_id == user_id).order_by(ActivityLog.created_at.desc()).limit(limit).all()
 
     def get_log_by_id(self, log_id: int) -> Optional[ActivityLog]:
         return self.db.query(ActivityLog).filter(ActivityLog.log_id == log_id).first()

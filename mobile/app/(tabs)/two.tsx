@@ -40,6 +40,31 @@ export default function IntelligenceScreen() {
     "✨ Finalizing guidance..."
   ];
 
+  const fetchHistory = async () => {
+    try {
+      const response = await apiClient.get('/api/intelligence/history');
+      const historyMessages = response.data.map((m: any) => ({
+        id: m.id,
+        type: m.role === 'user' ? 'user' : 'ai',
+        content: m.content,
+        timestamp: new Date(m.timestamp),
+        status: 'sent'
+      }));
+      setMessages(historyMessages);
+
+      // Scroll to bottom after loading
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: false });
+      }, 500);
+    } catch (error) {
+      console.error('Failed to fetch chat history:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchHistory();
+  }, []);
+
   useEffect(() => {
     let interval: any;
     if (loading) {

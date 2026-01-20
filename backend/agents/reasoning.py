@@ -12,7 +12,7 @@ class ReasoningAgent:
             temperature=0.7 # Higher temperature for more natural, nuanced guidance
         )
 
-    def generate_guidance(self, user_profile: Dict[str, Any], analytics: Dict[str, Any], historical_summaries: List[Dict[str, Any]] = None) -> str:
+    def generate_guidance(self, user_profile: Dict[str, Any], analytics: Dict[str, Any], historical_summaries: List[Dict[str, Any]] = None, chat_context: List[Dict[str, Any]] = None) -> str:
         """
         Generates personalized guidance based on user goals, recent behavior, and historical memory.
         """
@@ -29,8 +29,21 @@ class ReasoningAgent:
             - You speak with nuance and a friendly, conversational tone.
             - IMPORTANT: Do NOT use Markdown formatting like bold (**text**), italics (*text*), or markdown headers. Use plain text and emojis only to keep the chat clean.
             - Use single newlines for spacing.
+
+            AUTO-LOGGING FEATURE:
+            - If the user explicitly mentions they completed a task or worked for some time (e.g., "I debugged for 2 hours", "Just finished a 30m workout"), you MUST detect it.
+            - At the VERY END of your response, add this exact tag: [AUTO_LOG: activity_name, duration_int, short_description]
+            - Use activity names from: Coding, Research, Learning, Meeting, Exercise, Meditation, Reading, Leisure.
+            - If duration is not mentioned, estimate it or use 30.
+
+            GOAL & PROFILE UPDATES:
+            - If the user says something like "My new goal is [Goal]" or "I want to focus on [A, B, C]", use this tag at the VERY END: [UPDATE_PROFILE: new_primary_goal, focus_areas_comma_separated]
+            - Only include the field they changed. Leave others empty if not mentioned.
             """),
             ("human", """
+            Recent Chat Context:
+            {chat_history}
+
             Goal: {goal}
             Focus Areas: {focus}
             
@@ -44,7 +57,7 @@ class ReasoningAgent:
             User Specific Question/Query:
             {query}
 
-            Analyze current behavior vs goals, keeping historical trends in mind. Respond to the user's specific query if provided, otherwise provide a general progress assessment.
+            Analyze current behavior vs goals, keeping historical trends and recent conversation context in mind. Respond to the user's specific query if provided, otherwise provide a general progress assessment.
             """)
         ])
 
@@ -58,10 +71,11 @@ class ReasoningAgent:
             "distribution": analytics.get("activity_distribution"),
             "outcomes": analytics.get("recent_outcomes"),
             "history": history_text,
-            "query": user_profile.get("user_query", "No specific query provided.")
+            "query": user_profile.get("user_query", "No specific query provided."),
+            "chat_history": "\n".join([f"{m['role'].upper()}: {m['content']}" for m in chat_context]) if chat_context else "No recent chat history."
         })
 
-    def generate_onboarding_guidance(self, check_reason: str, query: str, analytics: Dict[str, Any], history: List[Dict[str, Any]] = None) -> str:
+    def generate_onboarding_guidance(self, check_reason: str, query: str, analytics: Dict[str, Any], history: List[Dict[str, Any]] = None, chat_context: List[Dict[str, Any]] = None) -> str:
         """
         Generates a personalized, context-aware onboarding message that acknowledges 
         recent progress while explaining why more data is still needed.
@@ -76,6 +90,9 @@ class ReasoningAgent:
             2. If they have activities logged, mention one specifically (e.g., "I see you spent time on [Activity] yesterday").
             3. Explain that while you're seeing their progress, you still need a bit more data (total 120+ mins) to unlock full strategic powers.
             4. Keep it warm, professional, and conversational.
+
+            AUTO-LOGGING FEATURE:
+            - If the user reports new work in this chat, add [AUTO_LOG: activity_name, duration_int, short_description] at the very end.
             
             FORMATTING RULES:
             - NO markdown symbols like ** or *.
@@ -84,13 +101,16 @@ class ReasoningAgent:
             - Use plain text and friendly paragraphs.
             """),
             ("human", """
+            Recent Chat Context:
+            {chat_history}
+
             Reason for data gap: {reason}
             User's specific question: {query}
             
             Current Analytics: {analytics}
             Historical Context: {history}
             
-            Please provide a conversational response that builds trust by showing you are tracking their specific journey.
+            Please provide a conversational response that builds trust by showing you are tracking their specific journey and remembering recent messages.
             """)
         ])
 
@@ -101,5 +121,6 @@ class ReasoningAgent:
             "reason": check_reason, 
             "query": query,
             "analytics": analytics,
-            "history": history_text
+            "history": history_text,
+            "chat_history": "\n".join([f"{m['role'].upper()}: {m['content']}" for m in chat_context]) if chat_context else "No recent chat history."
         })
