@@ -74,4 +74,9 @@ Built-in smart error handling and automated sync indicators ensure the connectio
 
 ---
 
+## 📄 License
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
 **Developed with ❤️ by Karan.**
