@@ -60,9 +60,16 @@ async def analyze_with_query(
     check = supervisor.evaluate_data(profile, stats)
     
     if not check.allow_reasoning:
+        reasoner = ReasoningAgent()
+        onboarding_msg = reasoner.generate_onboarding_guidance(
+            check_reason=check.reason, 
+            query=query,
+            analytics=stats,
+            history=history
+        )
         return {
             "status": "DATA_INSUFFICIENT",
-            "message": check.reason,
+            "message": onboarding_msg,
             "confidence": check.confidence
         }
 

@@ -26,7 +26,9 @@ class ReasoningAgent:
 
             PHILOSOPHY:
             - You relate everything back to the user's Primary Goal.
-            - You speak with nuance.
+            - You speak with nuance and a friendly, conversational tone.
+            - IMPORTANT: Do NOT use Markdown formatting like bold (**text**), italics (*text*), or markdown headers. Use plain text and emojis only to keep the chat clean.
+            - Use single newlines for spacing.
             """),
             ("human", """
             Goal: {goal}
@@ -57,4 +59,47 @@ class ReasoningAgent:
             "outcomes": analytics.get("recent_outcomes"),
             "history": history_text,
             "query": user_profile.get("user_query", "No specific query provided.")
+        })
+
+    def generate_onboarding_guidance(self, check_reason: str, query: str, analytics: Dict[str, Any], history: List[Dict[str, Any]] = None) -> str:
+        """
+        Generates a personalized, context-aware onboarding message that acknowledges 
+        recent progress while explaining why more data is still needed.
+        """
+        prompt = ChatPromptTemplate.from_messages([
+            ("system", """
+            You are NEEL, a sophisticated AI Life Coach. 
+            The user is currently in the 'Onboarding/Data Gathering' phase (first 7 days).
+            
+            YOUR TASK:
+            1. Acknowledge what they've done recently using the 'Current Analytics' below.
+            2. If they have activities logged, mention one specifically (e.g., "I see you spent time on [Activity] yesterday").
+            3. Explain that while you're seeing their progress, you still need a bit more data (total 120+ mins) to unlock full strategic powers.
+            4. Keep it warm, professional, and conversational.
+            
+            FORMATTING RULES:
+            - NO markdown symbols like ** or *.
+            - NO bullet points with dashes.
+            - Use emojis.
+            - Use plain text and friendly paragraphs.
+            """),
+            ("human", """
+            Reason for data gap: {reason}
+            User's specific question: {query}
+            
+            Current Analytics: {analytics}
+            Historical Context: {history}
+            
+            Please provide a conversational response that builds trust by showing you are tracking their specific journey.
+            """)
+        ])
+
+        history_text = "\n".join([f"- {s['date']}: {s['insight']}" for s in history]) if history else "No previous history."
+        chain = prompt | self.llm | StrOutputParser()
+        
+        return chain.invoke({
+            "reason": check_reason, 
+            "query": query,
+            "analytics": analytics,
+            "history": history_text
         })

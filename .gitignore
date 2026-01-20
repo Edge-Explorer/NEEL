@@ -41,7 +41,7 @@ alembic.log
 Thumbs.db
 
 # Frontend
-mobile/
+# mobile/ (Removed so it can be pushed)
 
 # Diagnostic Scripts
 check_models.py
