@@ -19,6 +19,7 @@
             },
             "env": {
                 "EXPO_NO_DOCTOR": "1",
+                "EAS_NO_DOCTOR": "1",
                 "EXPO_DEBUG": "1"
             }
         }
