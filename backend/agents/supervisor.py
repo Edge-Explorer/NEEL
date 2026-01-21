@@ -9,10 +9,13 @@ class ConfidenceScore(BaseModel):
     reason: str = Field(description="Explanation for the assigned confidence level")
     allow_reasoning: bool = Field(description="Whether the LLM is allowed to give advice")
 
+from backend.utils.model_selector import get_best_flash_model
+
 class SupervisorAgent:
     def __init__(self):
+        selected_model = get_best_flash_model()
         self.llm = ChatGoogleGenerativeAI(
-            model="gemini-2.0-flash",
+            model=selected_model,
             google_api_key=os.getenv("Google_Gemini_Api_Key"),
             temperature=0
         )

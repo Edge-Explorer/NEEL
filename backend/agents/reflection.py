@@ -9,10 +9,13 @@ class ReflectionDecision(BaseModel):
     critique: str = Field(description="Explanation of why the decision was made")
     suggested_revision: Optional[str] = Field(None, description="A revision if decision is SOFTEN")
 
+from backend.utils.model_selector import get_best_flash_model
+
 class ReflectionAgent:
     def __init__(self):
+        selected_model = get_best_flash_model()
         self.llm = ChatGoogleGenerativeAI(
-            model="gemini-2.0-flash",
+            model=selected_model,
             google_api_key=os.getenv("Google_Gemini_Api_Key"),
             temperature=0
         )

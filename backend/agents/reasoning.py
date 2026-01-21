@@ -4,10 +4,13 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 
+from backend.utils.model_selector import get_best_flash_model
+
 class ReasoningAgent:
     def __init__(self):
+        selected_model = get_best_flash_model()
         self.llm = ChatGoogleGenerativeAI(
-            model="gemini-2.0-flash",
+            model=selected_model,
             google_api_key=os.getenv("Google_Gemini_Api_Key"),
             temperature=0.7 # Higher temperature for more natural, nuanced guidance
         )
