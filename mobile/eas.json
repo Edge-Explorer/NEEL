@@ -20,7 +20,7 @@
             "env": {
                 "EXPO_NO_DOCTOR": "1",
                 "EAS_NO_DOCTOR": "1",
-                "EXPO_DEBUG": "1"
+                "EAS_SKIP_AUTO_FINGERPRINT": "1"
             }
         }
     },
