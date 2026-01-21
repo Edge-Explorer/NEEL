@@ -8,6 +8,11 @@
 
 ---
 
+## 📲 Download the App
+**[Download NEEL APK for Android](https://drive.google.com/file/d/19xgBoib7a0IM-4vt2OWgHXDF9khs-5vn/view?usp=drive_link)** 👈 *Install the future of productivity now.*
+
+---
+
 ## 🌐 Live Deployment
 - **Backend API**: [https://neel-8ybz.onrender.com/docs](https://neel-8ybz.onrender.com/docs)
 - **Status**: Live on Render (PostgreSQL)
