@@ -18,7 +18,8 @@
                 "buildType": "apk"
             },
             "env": {
-                "EXPO_NO_DOCTOR": "1"
+                "EXPO_NO_DOCTOR": "1",
+                "EXPO_DEBUG": "1"
             }
         }
     },
