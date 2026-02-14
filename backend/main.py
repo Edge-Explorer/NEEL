@@ -15,13 +15,14 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup: Create tables
+    # Startup: Create tables (Redundant since migrations are already run)
     logger.info("🚀 NEEL CORE v1.0.7 - STARTING")
-    try:
-        Base.metadata.create_all(bind=engine)
-        logger.info("✅ DATABASE SYNC COMPLETE")
-    except Exception as e:
-        logger.error(f"❌ DATABASE ERROR: {str(e)}")
+    # try:
+    #     Base.metadata.create_all(bind=engine)
+    #     logger.info("✅ DATABASE SYNC COMPLETE")
+    # except Exception as e:
+    #     logger.error(f"❌ DATABASE ERROR: {str(e)}")
+
     yield
 
 app = FastAPI(
