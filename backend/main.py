@@ -3,8 +3,8 @@ from sqlalchemy.orm import Session
 from backend.db.connection import get_db_session, engine
 from backend.db import Base
 from backend.models import User
-import uvicorn
 import logging
+
 from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
 from backend.routers import activities, activity_types, profiles, outcomes, intelligence, auth, dashboard
@@ -70,4 +70,6 @@ app.include_router(outcomes.router, prefix="/api/outcomes", tags=["outcomes"])
 app.include_router(intelligence.router, prefix="/api/intelligence", tags=["intelligence"])
 
 if __name__ == "__main__":
+    import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
+
