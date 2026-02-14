@@ -6,13 +6,12 @@ alembic/
 scripts/
 data/
 *.apk
-*.txt
 *.log
 *.pyc
 __pycache__/
 .git/
-.python-version
 .env
+
 README.md
 LICENSE
 Procfile
