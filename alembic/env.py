@@ -32,19 +32,30 @@ from backend.models import (
 # DATABASE CONFIGURATION
 # ============================================================================
 
-DB_USER = os.getenv("DB_USER", "postgres")
-DB_PASSWORD = os.getenv("DB_PASSWORD", "")
-DB_HOST = os.getenv("DB_HOST", "localhost")
-DB_PORT = os.getenv("DB_PORT", "5432")
-DB_NAME = os.getenv("DB_NAME", "neel_db")
+# Prioritize DIRECT_URL (for migrations), then DATABASE_URL, then manual components
+SQLALCHEMY_DATABASE_URL = os.getenv("DIRECT_URL") or os.getenv("DATABASE_URL")
 
-# URL-encode password to safely handle special characters (e.g., @, %, : , /)
-DB_PASSWORD_ENC = urllib.parse.quote_plus(DB_PASSWORD)
+if not SQLALCHEMY_DATABASE_URL:
+    DB_USER = os.getenv("DB_USER", "postgres")
+    DB_PASSWORD = os.getenv("DB_PASSWORD", "")
+    DB_HOST = os.getenv("DB_HOST", "localhost")
+    DB_PORT = os.getenv("DB_PORT", "5432")
+    DB_NAME = os.getenv("DB_NAME", "neel_db")
+    
+    # URL-encode password to safely handle special characters
+    DB_PASSWORD_ENC = urllib.parse.quote_plus(DB_PASSWORD)
+    SQLALCHEMY_DATABASE_URL = (
+        f"postgresql+psycopg2://{DB_USER}:{DB_PASSWORD_ENC}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+    )
 
-# Build complete database URL for psycopg2
-SQLALCHEMY_DATABASE_URL = (
-    f"postgresql+psycopg2://{DB_USER}:{DB_PASSWORD_ENC}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
-)
+# Ensure the URL uses postgresql+psycopg2 for SQLAlchemy
+if SQLALCHEMY_DATABASE_URL.startswith("postgresql://"):
+    SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("postgresql://", "postgresql+psycopg2://", 1)
+elif SQLALCHEMY_DATABASE_URL.startswith("postgres://"):
+    SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("postgres://", "postgresql+psycopg2://", 1)
+
+
+
 
 # ============================================================================
 # ALEMBIC CONFIGURATION

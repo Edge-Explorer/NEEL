@@ -49,7 +49,14 @@ def get_db_connection():
         # Priority: DATABASE_URL, then individual components
         dsn = os.getenv("DATABASE_URL")
         if dsn:
+            # psycopg2 doesn't like the +psycopg2 prefix that SQLAlchemy/Alembic use
+            if "postgresql+psycopg2://" in dsn:
+                dsn = dsn.replace("postgresql+psycopg2://", "postgresql://", 1)
+            elif "postgres+psycopg2://" in dsn:
+                dsn = dsn.replace("postgres+psycopg2://", "postgresql://", 1)
+                
             conn = psycopg2.connect(dsn, cursor_factory=RealDictCursor)
+
         else:
             conn = psycopg2.connect(
                 host=os.getenv("DB_HOST", "localhost"),
