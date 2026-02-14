@@ -2,8 +2,9 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // FOR DEVELOPMENT: Use your localtunnel or IP address
-// FOR PRODUCTION: Use your Render URL (e.g., 'https://neel-backend.onrender.com')
-const API_BASE_URL = 'https://neel-8ybz.onrender.com';
+// FOR PRODUCTION: Use your Vercel URL
+const API_BASE_URL = 'https://neel-green.vercel.app';
+
 
 const apiClient = axios.create({
     baseURL: API_BASE_URL,
