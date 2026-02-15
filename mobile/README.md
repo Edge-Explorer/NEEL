@@ -27,6 +27,11 @@ The NEEL Mobile app is a premium React Native application built with **Expo**. I
 - `npx expo run:android`: Build and run on Android emulator/device.
 - `npx expo run:ios`: Build and run on iOS simulator/device.
 
+## 🌍 Deployment
+- **Backend API**: [https://neel-green.vercel.app](https://neel-green.vercel.app)
+- **Download APK**: [Google Drive Link](https://drive.google.com/file/d/1S-STasJHdxNbDluiPOVuIbMDho2QOHMy/view?usp=drive_link)
+
 ---
-**NEEL Mobile v1.0.8**
+**NEEL Mobile v1.0.9**  
 **Developed by Karan**
+

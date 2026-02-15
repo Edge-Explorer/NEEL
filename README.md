@@ -12,7 +12,8 @@
 
 **An intelligent life coach & productivity strategist powered by multi-agent AI architecture**
 
-[Download App](https://drive.google.com/file/d/19xgBoib7a0IM-4vt2OWgHXDF9khs-5vn/view?usp=drive_link) • [Live API](https://neel-8ybz.onrender.com/docs) • [Report Bug](https://github.com/Edge-Explorer/NEEL/issues) • [Request Feature](https://github.com/Edge-Explorer/NEEL/issues)
+[Download App (APK)](https://drive.google.com/file/d/1S-STasJHdxNbDluiPOVuIbMDho2QOHMy/view?usp=drive_link) • [Live API](https://neel-green.vercel.app/docs) • [Report Bug](https://github.com/Edge-Explorer/NEEL/issues) • [Request Feature](https://github.com/Edge-Explorer/NEEL/issues)
+
 
 <img src="mobile/assets/images/icon.png" alt="NEEL Logo" width="200"/>
 
@@ -55,7 +56,7 @@ Designed for **high-performers** — Engineers, Researchers, Creators — NEEL s
 - 🪄 **Magic Auto-Logging**: Natural language activity parsing
 - 📊 **Behavioral Analytics**: Deep insights into productivity patterns
 - 🎨 **Premium UX**: Glassmorphic design with dynamic gradients
-- ☁️ **Cloud-Native**: Production-ready deployment on Render + PostgreSQL
+- ☁️ **Cloud-Native**: Production-ready deployment on Vercel + Supabase
 
 ---
 
@@ -112,9 +113,10 @@ NEEL implements a **backend-first, multi-agent AI architecture** with cloud-nati
                      │
                      ▼
 ┌─────────────────────────────────────────────────────────┐
-│          PostgreSQL Database (Render Managed)           │
+│          PostgreSQL Database (Supabase Managed)         │
 │     Users • Activities • Chats • Analytics              │
 └─────────────────────────────────────────────────────────┘
+
 ```
 
 ### Agent Responsibilities
@@ -134,7 +136,7 @@ NEEL implements a **backend-first, multi-agent AI architecture** with cloud-nati
 - **AI/ML**: LangChain + Google Gemini 1.5 Flash
 - **Database**: PostgreSQL 15+ (Alembic migrations)
 - **ORM**: SQLAlchemy 2.0+
-- **Deployment**: Render (Cloud Platform)
+- **Deployment**: Vercel (Serverless Cloud Platform)
 - **Authentication**: JWT-based secure auth
 - **API Docs**: Auto-generated OpenAPI (Swagger)
 
@@ -227,7 +229,7 @@ npm install
 // mobile/services/api.js
 const API_BASE_URL = 'http://YOUR_LOCAL_IP:8000';  // For local dev
 // OR
-const API_BASE_URL = 'https://neel-8ybz.onrender.com';  // For production
+const API_BASE_URL = 'https://neel-green.vercel.app';  // For production
 ```
 
 4. **Start Expo development server**
@@ -292,7 +294,7 @@ NEEL/
 ## 📚 API Documentation
 
 ### Base URL
-- **Production**: `https://neel-8ybz.onrender.com`
+- **Production**: `https://neel-green.vercel.app`
 - **Local**: `http://localhost:8000`
 
 ### Interactive Documentation
@@ -341,7 +343,7 @@ GET    /api/analytics/calibration   # Calibration status
 ### Magic Auto-Logging Example
 
 ```bash
-curl -X POST "https://neel-8ybz.onrender.com/api/activities/auto-log" \
+curl -X POST "https://neel-green.vercel.app/api/activities/auto-log" \
   -H "Authorization: Bearer YOUR_JWT_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -514,34 +516,31 @@ alembic downgrade -1
 
 ## 🚀 Deployment
 
-### Render Deployment
+### Vercel Deployment
 
-NEEL is deployed on **Render** with the following configuration:
+NEEL is deployed on **Vercel** as a Serverless FastAPI application.
 
-**render.yaml**
-```yaml
-services:
-  - type: web
-    name: neel-backend
-    env: python
-    buildCommand: pip install -r requirements.txt
-    startCommand: ./start_render.sh
-    envVars:
-      - key: PYTHON_VERSION
-        value: 3.11.0
-      - key: DATABASE_URL
-        fromDatabase:
-          name: neel-db
-          property: connectionString
-      - key: GOOGLE_GEMINI_API_KEY
-        sync: false
-
-databases:
-  - name: neel-db
-    databaseName: neel_production
-    user: neel_user
-    plan: starter
+**vercel.json**
+```json
+{
+  "functions": {
+    "api/main.py": {
+      "maxDuration": 10
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "api/main.py"
+    }
+  ]
+}
 ```
+
+### Database (Supabase)
+
+The production database is hosted on **Supabase** for its excellent performance and connection pooling (essential for serverless functions).
+
 
 ### Environment Variables
 
@@ -566,7 +565,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES=30
 ### Health Check
 
 ```bash
-curl https://neel-8ybz.onrender.com/health
+curl https://neel-green.vercel.app/docs
 ```
 
 Expected response:
@@ -735,8 +734,8 @@ copies of the Software...
 - [Google Gemini](https://deepmind.google/technologies/gemini/) - Large language model
 - [React Native](https://reactnative.dev/) - Mobile framework
 - [Expo](https://expo.dev/) - React Native toolchain
-- [Render](https://render.com/) - Cloud platform
-- [PostgreSQL](https://www.postgresql.org/) - Database system
+- [Vercel](https://vercel.com/) - Cloud platform
+- [Supabase](https://supabase.com/) - Database system
 
 ---
 
