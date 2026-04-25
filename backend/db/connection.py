@@ -35,11 +35,18 @@ if not DATABASE_URL:
 
 # SQLAlchemy Setup
 from sqlalchemy.pool import NullPool
-engine = create_engine(
-    DATABASE_URL, 
-    connect_args={"connect_timeout": 10},
-    poolclass=NullPool # Recommended for Supabase Transaction Pooler
-)
+try:
+    engine = create_engine(
+        DATABASE_URL, 
+        connect_args={"connect_timeout": 10},
+        poolclass=NullPool # Recommended for Supabase Transaction Pooler
+    )
+    logger.info("✅ Database engine created successfully")
+except Exception as e:
+    logger.error(f"❌ FAILED to create database engine: {str(e)}")
+    # We create a dummy engine to prevent the whole app from crashing on import
+    engine = create_engine("sqlite:///:memory:") 
+
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 def get_db_session():
