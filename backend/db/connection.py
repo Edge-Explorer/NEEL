@@ -9,8 +9,14 @@ load_dotenv()
 
 # Database Configuration
 DATABASE_URL = os.getenv("DATABASE_URL")
-if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
-    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+if DATABASE_URL:
+    if DATABASE_URL.startswith("postgres://"):
+        DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+    # Strip pgbouncer=true from the URL as psycopg2 doesn't like it in the DSN
+    if "?pgbouncer=true" in DATABASE_URL:
+        DATABASE_URL = DATABASE_URL.replace("?pgbouncer=true", "")
+    elif "&pgbouncer=true" in DATABASE_URL:
+        DATABASE_URL = DATABASE_URL.replace("&pgbouncer=true", "")
 
 if not DATABASE_URL:
     # Fallback to individual components
@@ -24,10 +30,11 @@ if not DATABASE_URL:
     DATABASE_URL = f"postgresql://{DB_USER}:{encoded_password}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 
 # SQLAlchemy Setup
-# Add a 10 second timeout to connection attempts to prevent hangs
+from sqlalchemy.pool import NullPool
 engine = create_engine(
     DATABASE_URL, 
-    connect_args={"connect_timeout": 10}
+    connect_args={"connect_timeout": 10},
+    poolclass=NullPool # Recommended for Supabase Transaction Pooler
 )
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
@@ -54,6 +61,14 @@ def get_db_connection():
                 dsn = dsn.replace("postgresql+psycopg2://", "postgresql://", 1)
             elif "postgres+psycopg2://" in dsn:
                 dsn = dsn.replace("postgres+psycopg2://", "postgresql://", 1)
+            elif dsn.startswith("postgres://"):
+                dsn = dsn.replace("postgres://", "postgresql://", 1)
+            
+            # Strip pgbouncer=true
+            if "?pgbouncer=true" in dsn:
+                dsn = dsn.replace("?pgbouncer=true", "")
+            elif "&pgbouncer=true" in dsn:
+                dsn = dsn.replace("&pgbouncer=true", "")
                 
             conn = psycopg2.connect(dsn, cursor_factory=RealDictCursor)
 
