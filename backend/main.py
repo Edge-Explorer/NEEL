@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Depends, HTTPException, Request
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 from backend.db.connection import get_db_session, engine
 from backend.db import Base
@@ -43,16 +44,24 @@ app.add_middleware(
 # Logging middleware
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
-    logger.info(f"🔍 REQUEST: {request.method} {request.url}")
+    print(f"DEBUG: Incoming Request {request.method} {request.url}")
     try:
         response = await call_next(request)
-        logger.info(f"🟢 RESPONSE: {response.status_code}")
         return response
     except Exception as e:
         import traceback
-        error_details = traceback.format_exc()
-        logger.error(f"💥 SERVER CRASH: {str(e)}\n{error_details}")
-        raise e # Re-raise to allow FastAPI to handle the 500 error properly
+        print(f"CRITICAL ERROR: {str(e)}\n{traceback.format_exc()}")
+        raise e
+
+@app.get("/api/health")
+async def health_check():
+    from backend.db.connection import engine
+    try:
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+        return {"status": "healthy", "database": "connected"}
+    except Exception as e:
+        return {"status": "unhealthy", "error": str(e)}
 
 @app.get("/")
 async def root():
