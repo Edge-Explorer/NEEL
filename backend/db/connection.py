@@ -12,11 +12,15 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 if DATABASE_URL:
     if DATABASE_URL.startswith("postgres://"):
         DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
-    # Strip pgbouncer=true from the URL as psycopg2 doesn't like it in the DSN
-    if "?pgbouncer=true" in DATABASE_URL:
-        DATABASE_URL = DATABASE_URL.replace("?pgbouncer=true", "")
-    elif "&pgbouncer=true" in DATABASE_URL:
-        DATABASE_URL = DATABASE_URL.replace("&pgbouncer=true", "")
+    
+    # Robust pgbouncer stripping
+    import re
+    DATABASE_URL = re.sub(r'(\?|&)pgbouncer=true', '', DATABASE_URL)
+    # If we removed the first param, make sure the next one starts with ? not &
+    if '?' not in DATABASE_URL and '&' in DATABASE_URL:
+        DATABASE_URL = DATABASE_URL.replace('&', '?', 1)
+    
+    logger.info(f"🔌 DB URL Cleaned and Ready")
 
 if not DATABASE_URL:
     # Fallback to individual components
@@ -64,11 +68,11 @@ def get_db_connection():
             elif dsn.startswith("postgres://"):
                 dsn = dsn.replace("postgres://", "postgresql://", 1)
             
-            # Strip pgbouncer=true
-            if "?pgbouncer=true" in dsn:
-                dsn = dsn.replace("?pgbouncer=true", "")
-            elif "&pgbouncer=true" in dsn:
-                dsn = dsn.replace("&pgbouncer=true", "")
+            # Strip pgbouncer=true robustly
+            import re
+            dsn = re.sub(r'(\?|&)pgbouncer=true', '', dsn)
+            if '?' not in dsn and '&' in dsn:
+                dsn = dsn.replace('&', '?', 1)
                 
             conn = psycopg2.connect(dsn, cursor_factory=RealDictCursor)
 
