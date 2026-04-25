@@ -44,9 +44,15 @@ app.add_middleware(
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
     logger.info(f"🔍 REQUEST: {request.method} {request.url}")
-    response = await call_next(request)
-    logger.info(f"🟢 RESPONSE: {response.status_code}")
-    return response
+    try:
+        response = await call_next(request)
+        logger.info(f"🟢 RESPONSE: {response.status_code}")
+        return response
+    except Exception as e:
+        import traceback
+        error_details = traceback.format_exc()
+        logger.error(f"💥 SERVER CRASH: {str(e)}\n{error_details}")
+        raise e # Re-raise to allow FastAPI to handle the 500 error properly
 
 @app.get("/")
 async def root():
